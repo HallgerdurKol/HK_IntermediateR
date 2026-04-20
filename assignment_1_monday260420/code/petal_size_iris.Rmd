@@ -1,0 +1,60 @@
+---
+title: "Assignment 1"
+author: "Hallgerdur Kolbeinsdottir"
+date: "2026-04-20"
+output: html_document
+---
+
+# Load packages
+```{r}
+library(tidyverse)
+```
+
+# Load and explore dataset iris
+```{r}
+# Load the iris data set
+data(iris) 
+
+# Explore the iris dataset
+head(iris) # Display first lines of iris
+summary(iris) # Summarise iris
+str(iris) # Display structure
+```
+# Data manipulation
+```{r}
+
+iris_dataset <- as_tibble(iris) %>% 
+  # Change names of variables to lowercase and with underscore
+  select(
+    species = Species, 
+    petal_width = Petal.Width, 
+    petal_length = Petal.Length
+    ) %>%
+  mutate(petal_tot = petal_length + petal_width) %>% # calculate width + height of petals
+  arrange(desc(petal_tot)) # arrange by height + width in descending order
+
+# Display the 10 flowers with the largest petal size
+head(iris_dataset, 10)
+```
+
+# Data visualization
+```{r}
+# Create ggplot
+ggplot(iris_dataset) +
+  geom_point(aes(x = species, y = petal_tot, col = species)) +
+  theme_classic() +
+  labs(
+    title = "Size of flower petals", 
+    y = "Sum of width and height of petals",
+    x = "Flower Species")
+
+# Save plot
+ggsave("assignment_1_monday260420/plots/petal_size.png")
+
+```
+
+
+
+
+
+

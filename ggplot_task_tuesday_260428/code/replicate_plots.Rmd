@@ -1,0 +1,214 @@
+---
+title: "Task day 7 ggplot"
+author: "Hallgerdur Kolbeinsdottir"
+date: "2026-04-28"
+output: html_document
+---
+
+```{r}
+library(tidyverse)
+```
+
+
+# 1. Boxplot with Violins
+```{r}
+# Load data
+plot1_data <- read.csv("./ggplot_task_tuesday_260428/data/data_plot1.csv")
+
+# Plot
+p1 <- ggplot(plot1_data, aes(x = name, y = value, fill = name)) +
+        geom_violin(width = 1.4) +                # Violin plot, increase the width
+        geom_boxplot(width = 0.1, outliers = F) + # Boxplot without outliers
+        theme_bw() +                              # White background theme with grid
+        labs(y = "Value", title = "Boxplot + Violin", x = "") +
+        guides(fill = "none") +                   # Remove guides
+        scale_x_discrete(labels = c(              # Change x-axis labels
+          "A" = "A \n n = 500", 
+          "B" = "B \n n = 1000", 
+          "C" = "C \n n = 20", 
+          "D" = "D \n n = 100"
+          ))
+# Save
+ggsave(
+  "./ggplot_task_tuesday_260428/figures/plot1_Boxplot_with_Violins.pdf", 
+  width = 10, 
+  height = 5
+  )
+```
+
+
+# 2. Simple scatter plot
+```{r}
+# Load data
+plot2_data <- read.csv("./ggplot_task_tuesday_260428/data/data_plot2.csv") 
+
+# Plot
+ggplot(plot2_data) +
+  geom_point(aes(x = area, y = poptotal, col = state, size = popdensity)) + # Scatterplot
+  geom_smooth(aes(x = area, y = poptotal), method = "loess", se = F) +      # Add a model without standard error
+  theme_bw() +
+  labs(
+    title = "Scatterplot", 
+    subtitle = "Area vs Population", 
+    y = "Population", 
+    x = "Area"
+    ) +
+  scale_y_continuous(           # Change y axis labels and limits
+    limits = c(0, 500000),
+    labels = c("0", "100000", "200000", "300000", "400000", "500000")
+    ) +
+  xlim(0, 0.1)                  # Change x axis limits
+  
+# Save
+ggsave(
+  "./ggplot_task_tuesday_260428/figures/plot2_Simple_Scatterplot.pdf", 
+  width = 8, 
+  height = 5
+  )
+
+
+```
+
+
+# 3. Counts plot
+```{r}
+
+# I was not able to figure out what the size argument should be or how to change the df to make it
+
+# Load data
+plot3_data <- read.csv("./ggplot_task_tuesday_260428/data/data_plot3.csv") 
+
+# Plot
+ggplot(plot3_data, aes(x = cty, y = hwy, size = cyl)) +  #Put size as cyl even though it is wrong
+  geom_point(col = "darkred") +
+  theme_bw() +
+  guides(size = "none") +
+  labs(title = "Counts plot", subtitle = "mpg: city vs highway mileage")
+  
+
+
+# Save
+ggsave(
+  "./ggplot_task_tuesday_260428/figures/plot3_Simple_Scatterplot.pdf", 
+  width = 8, 
+  height = 5
+  )
+
+
+
+```
+
+# 4. Divergent plot
+
+```{r}
+
+# Load data
+plot4_data <- read.csv("./ggplot_task_tuesday_260428/data/data_plot4.csv") %>%
+  select(car_name, mpg) %>%
+  mutate(
+    mean_mpg = mean(mpg),
+    sd_mpg = sd(plot4_data$mpg)
+    ) %>%
+  mutate(z_score = (mpg - mean_mpg)/sd_mpg) %>%
+  mutate(Mileage = ifelse(z_score >= 0, "Above Average", "Below Average"))
+  
+  
+ggplot(plot4_data, aes(x = z_score, y = reorder(car_name, z_score), fill = Mileage)) +
+  geom_bar(stat = "identity",) +
+  scale_fill_manual(values=c("#82CF87", "#D9573D")) +  # Not exactly the right colors
+  theme_bw() +
+  labs(y = "Car Name", x = "MPG (Z_score)")
+  
+
+
+# Save
+ggsave(
+  "./ggplot_task_tuesday_260428/figures/plot4_Divergent_Plot.pdf", 
+  width = 8, 
+  height = 5
+  )
+
+```
+
+
+# 5. Lollipop Chart
+
+```{r}
+
+# Load data
+plot5_data <- read.csv("./ggplot_task_tuesday_260428/data/data_plot5.csv")
+
+# Plot
+ggplot(plot5_data) +
+  geom_segment(aes(x = reorder(manufacturer, mileage), xend = manufacturer, y = 0, yend = mileage), col = "grey") +
+  geom_point(aes(x = manufacturer, y = mileage), col = "#F0AE1F", size = 2.5) +
+  theme_minimal() +
+  theme(
+    panel.grid.major.x = element_line(colour = "white"),
+    axis.text.x = element_text(angle = 45, vjust = 1, hjust=1)
+    ) +
+  labs(y = "Avg. Mileage", x = "", title = "Lollipop Chart", subtitle = "Average city mileage by manufacturer") 
+  
+# Save
+ggsave(
+  "./ggplot_task_tuesday_260428/figures/plot5_Lollipop_Chartt.pdf", 
+  width = 8, 
+  height = 5
+  )
+
+
+```
+
+
+# 6. Volcano plot
+
+```{r}
+
+# Load data
+plot6_data <- read.csv("./ggplot_task_tuesday_260428/data/data_plot6.csv") %>%
+  mutate(logpval = -log10(pvalue)) %>%
+  filter(logpval < 40, log2FoldChange < 0.8) %>%
+  mutate(lowp = ifelse(logpval > 5.2 & log2FoldChange < 0, "downregulated", ifelse(logpval > 5.2 & log2FoldChange >= 0, "upregulated", "no effect")))
+
+label_genes <- plot6_data %>%
+  filter(lowp != "no effect")
+  
+
+# Plot
+ggplot(plot6_data) +
+  geom_point(aes(x = log2FoldChange, y = logpval, col = lowp)) +
+  scale_color_manual(values = c("blue", "black", "red2")) +
+  geom_text(data = label_genes, aes(x = log2FoldChange, y = logpval, label = gene_symbol), size = 3) +
+  labs(title = "Volcano plot", x = "log2FC", y = "-log10 (P-value)") +
+  theme(
+    panel.background = element_rect(fill = "#D4D4D4"),
+    panel.grid = element_blank(),
+    panel.border = element_rect(fill = "black"),
+    plot.title = element_text(hjust = 0.5)
+    ) +
+  guides(col = "none")
+  
+  
+# Save
+ggsave(
+  "./ggplot_task_tuesday_260428/figures/plot6_Volcano_Plot.pdf", 
+  width = 8, 
+  height = 5
+  )
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
